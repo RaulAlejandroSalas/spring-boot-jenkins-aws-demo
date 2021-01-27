@@ -1,11 +1,14 @@
 plugins {
+	id 'java'
 	id 'org.springframework.boot' version '2.4.2'
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
-	id 'java'
+	id 'pl.allegro.tech.build.axion-release' version '1.12.0'
+	id 'com.palantir.docker' version '0.25.0'
+	id 'com.palantir.docker-run' version '0.25.0'
 }
 
 group = 'de.rauldev.spring-boot-jenkins-aws-demo'
-version = '0.0.1-SNAPSHOT'
+version = '1.0.0'
 sourceCompatibility = '15'
 
 configurations {
@@ -33,4 +36,22 @@ dependencies {
 
 test {
 	useJUnitPlatform()
+}
+
+
+String dockerHubUsernameProperty = findProperty('dockerHubUsername') ?: '19910821'
+String imageName = "${dockerHubUsernameProperty}/spring-boot-jenkins-aws-demo:$version"
+
+docker{
+	name imageName
+	files "build/libs/${bootJar.archiveFileName.get()}"
+	buildArgs([JAR_FILE: bootJar.archiveFileName.get()]) //an argument map of string to string which will set --build-arg arguments to the docker build command; defaults to empty, which results in no --build-arg parameters
+	noCache true
+}
+
+dockerRun {
+	name project.name
+	image imageName
+	ports '8080:8080'
+	clean true
 }
